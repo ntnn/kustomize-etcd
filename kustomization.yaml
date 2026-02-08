@@ -1,0 +1,38 @@
+resources:
+  - ./original
+
+images:
+  - name: quay.io/coreos/etcd
+    newTag: v3.6.7
+
+patches:
+
+  # drop affinity, this is meant for development deployments e.g. in kind
+  - target:
+      kind: StatefulSet
+      name: etcd
+    patch: |-
+      - op: remove
+        path: /spec/template/spec/affinity
+
+  # add cluster domain so downstream can just patch this and doesn't
+  # have to patch the arg
+  - target:
+      kind: StatefulSet
+      name: etcd
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: CLUSTER_DOMAIN
+          value: cluster.local
+
+  # patch the initial cluster command to work with any kube dns provider
+  # etcd docs says <pod>.<svc>, spec behaviour is <pod>.<svc>.svc.<ns>.<domain>
+  - target:
+      kind: StatefulSet
+      name: etcd
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/args/8
+        value: --initial-cluster=etcd-0=$(URI_SCHEME)://etcd-0.$(SERVICE_NAME).$(K8S_NAMESPACE).svc.$(CLUSTER_DOMAIN):2380,etcd-1=$(URI_SCHEME)://etcd-1.$(SERVICE_NAME).$(K8S_NAMESPACE).svc.$(CLUSTER_DOMAIN):2380,etcd-2=$(URI_SCHEME)://etcd-2.$(SERVICE_NAME).$(K8S_NAMESPACE).svc.$(CLUSTER_DOMAIN):2380

@@ -3,7 +3,7 @@ resources:
 
 images:
   - name: quay.io/coreos/etcd
-    newTag: v3.6.7
+    newTag: v3.6.7@sha256:5e1f10a335d3e0f0274f1062f6ea5def062027ddeb2d5d3d5d6ae5a4383f5bc3
 
 patches:
 
